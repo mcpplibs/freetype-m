@@ -267,7 +267,8 @@ def main():
     _, _, files = outputs(root)
     stale = []
     for path, text in files.items():
-        current = path.read_bytes().decode('utf-8') if path.exists() else None
+        # A checkout may have CRLF line ends (Windows' core.autocrlf): compare the text.
+        current = path.read_bytes().decode('utf-8').replace('\r\n', '\n') if path.exists() else None
         if current == text:
             continue
         if args.check:
