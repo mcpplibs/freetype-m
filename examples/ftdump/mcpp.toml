@@ -1,0 +1,12 @@
+[package]
+name        = "ftdump"
+version     = "0.1.0"
+description = "Describe a font file (faces, formats, flags, metrics, character maps, variation axes, names, tables, palettes) through import mcpplibs.mwrap.freetype"
+license     = "Apache-2.0"
+
+[targets.ftdump]
+kind = "bin"
+main = "src/main.cpp"
+
+[dependencies]
+"mcpplibs.mwrap.freetype" = { path = "../.." }

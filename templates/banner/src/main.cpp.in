@@ -1,0 +1,164 @@
+// {{project.name}} — FreeType through import mcpplibs.mwrap.freetype, drawn on
+// the terminal. Without arguments: a star outline built point by point and a
+// ring stroked around it, both rasterised by FreeType. With a font file:
+// the text laid out with the font's advances and kerning, each glyph
+// rendered to coverage.
+import std;
+import mcpplibs.mwrap.freetype;
+
+using namespace mcpplibs::mwrap::freetype::macros;  // FT_LOAD_RENDER, FT_CURVE_TAG_ON, FT_HAS_KERNING …
+
+namespace {
+
+// A coverage canvas, printed with a ramp of characters (two pixel rows a line).
+struct Canvas {
+    int width, height;
+    std::vector<unsigned char> cells;
+    Canvas(int w, int h) : width(w), height(h), cells(static_cast<std::size_t>(w) * h) {}
+
+    FT_Bitmap bitmap() {  // the whole canvas as an 8-bit FreeType target
+        FT_Bitmap b{};
+        b.rows = static_cast<unsigned>(height);
+        b.width = static_cast<unsigned>(width);
+        b.pitch = width;
+        b.buffer = cells.data();
+        b.num_grays = 256;
+        b.pixel_mode = FT_PIXEL_MODE_GRAY;
+        return b;
+    }
+    void blend(const FT_Bitmap& g, int left, int top) {  // a glyph's coverage, top-left at (left, top)
+        for (unsigned r = 0; r < g.rows; ++r)
+            for (unsigned c = 0; c < g.width; ++c) {
+                int x = left + static_cast<int>(c), y = top + static_cast<int>(r);
+                if (x < 0 || y < 0 || x >= width || y >= height) continue;
+                auto& cell = cells[static_cast<std::size_t>(y) * width + x];
+                cell = std::max(cell, g.buffer[r * g.pitch + c]);
+            }
+    }
+    void print() const {
+        constexpr std::string_view ramp = " .:-=+*#%@";
+        for (int y = 0; y + 1 < height; y += 2) {
+            std::string line;
+            for (int x = 0; x < width; ++x) {
+                int v = (cells[static_cast<std::size_t>(y) * width + x] + cells[static_cast<std::size_t>(y + 1) * width + x]) / 2;
+                line += ramp[static_cast<std::size_t>(v) * (ramp.size() - 1) / 255];
+            }
+            while (!line.empty() && line.back() == ' ') line.pop_back();
+            std::println("{}", line);
+        }
+    }
+};
+
+constexpr FT_Pos px(double v) { return static_cast<FT_Pos>(v * 64); }  // pixels to 26.6
+
+int shapes(FT_Library lib) {
+    Canvas canvas(72, 72);
+    const FT_Vector centre{px(36), px(36)};
+
+    // A five-pointed star, its ten points from FreeType's own trigonometry.
+    FT_Outline star{};
+    if (FT_Outline_New(lib, 10, 1, &star)) return 1;
+    for (int i = 0; i < 10; ++i) {
+        FT_Vector p{};
+        FT_Vector_From_Polar(&p, i % 2 ? px(10) : px(25), FT_ANGLE_PI2 + i * (FT_ANGLE_PI / 5));
+        star.points[i] = {centre.x + p.x, centre.y + p.y};
+        star.tags[i] = FT_CURVE_TAG_ON;
+    }
+    star.contours[0] = 9;
+    FT_Bitmap target = canvas.bitmap();
+    FT_Outline_Get_Bitmap(lib, &star, &target);
+    FT_Outline_Done(lib, &star);
+
+    // A circle of eight quadratic arcs, stroked 3 px wide into a ring.
+    FT_Stroker stroker{};
+    if (FT_Stroker_New(lib, &stroker)) return 1;
+    FT_Stroker_Set(stroker, px(1.5), FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
+    auto at = [&](FT_Fixed radius, FT_Angle angle) {
+        FT_Vector v{};
+        FT_Vector_From_Polar(&v, radius, angle);
+        return FT_Vector{centre.x + v.x, centre.y + v.y};
+    };
+    const FT_Fixed radius = px(32), control = FT_DivFix(radius, FT_Cos(FT_ANGLE_PI / 8));
+    FT_Vector start = at(radius, 0);
+    FT_Stroker_BeginSubPath(stroker, &start, 0);
+    for (int i = 0; i < 8; ++i) {
+        FT_Vector c = at(control, (2 * i + 1) * (FT_ANGLE_PI / 8)), to = at(radius, (i + 1) * (FT_ANGLE_PI / 4));
+        FT_Stroker_ConicTo(stroker, &c, &to);
+    }
+    FT_Stroker_EndSubPath(stroker);
+    FT_UInt points = 0, contours = 0;
+    FT_Stroker_GetCounts(stroker, &points, &contours);
+    FT_Outline ring{};
+    FT_Outline_New(lib, points, contours, &ring);
+    ring.n_points = ring.n_contours = 0;
+    FT_Stroker_Export(stroker, &ring);
+    FT_Outline_Get_Bitmap(lib, &ring, &target);
+    FT_Outline_Done(lib, &ring);
+    FT_Stroker_Done(stroker);
+
+    canvas.print();
+    std::println("A star of {} points and a ring of {} points, rasterised by FreeType {}.{}.{}.", 10, points,
+                 FREETYPE_MAJOR, FREETYPE_MINOR, FREETYPE_PATCH);
+    return 0;
+}
+
+std::vector<char32_t> decode(std::string_view utf8) {  // UTF-8 to code points (invalid bytes as U+FFFD)
+    std::vector<char32_t> out;
+    for (std::size_t i = 0; i < utf8.size();) {
+        auto b = static_cast<unsigned char>(utf8[i]);
+        int n = b < 0x80 ? 0 : b >> 5 == 6 ? 1 : b >> 4 == 14 ? 2 : b >> 3 == 30 ? 3 : -1;
+        if (n < 0 || (n > 0 && i + n >= utf8.size())) { out.push_back(0xFFFD); ++i; continue; }
+        char32_t c = n == 0 ? b : b & (0x3F >> n);
+        for (int k = 1; k <= n; ++k) c = c << 6 | (static_cast<unsigned char>(utf8[i + k]) & 0x3F);
+        out.push_back(c);
+        i += static_cast<std::size_t>(n) + 1;
+    }
+    return out;
+}
+
+int text(FT_Library lib, const char* path, std::string_view utf8, int size) {
+    FT_Face face{};
+    if (FT_Error e = FT_New_Face(lib, path, 0, &face)) {
+        std::println(std::cerr, "{}: not a font FreeType can open (error {:#x})", path, e);
+        return 1;
+    }
+    FT_Set_Pixel_Sizes(face, 0, static_cast<FT_UInt>(size));
+    const int ascender = static_cast<int>(face->size->metrics.ascender >> 6);
+    const int height = ascender - static_cast<int>(face->size->metrics.descender >> 6);
+
+    // First the width: the advances, kerned.
+    std::vector<std::pair<FT_UInt, FT_Pos>> glyphs;  // glyph index, pen x in 26.6
+    FT_Pos pen = 0;
+    FT_UInt previous = 0;
+    for (char32_t c : decode(utf8)) {
+        FT_UInt index = FT_Get_Char_Index(face, c);
+        if (previous && index && FT_HAS_KERNING(face)) {
+            FT_Vector kern{};
+            FT_Get_Kerning(face, previous, index, FT_KERNING_DEFAULT, &kern);
+            pen += kern.x;
+        }
+        glyphs.emplace_back(index, pen);
+        if (!FT_Load_Glyph(face, index, FT_LOAD_DEFAULT)) pen += face->glyph->advance.x;
+        previous = index;
+    }
+    Canvas canvas(static_cast<int>(pen >> 6) + 2, height + 1);
+    for (auto [index, x] : glyphs)
+        if (!FT_Load_Glyph(face, index, FT_LOAD_RENDER))
+            canvas.blend(face->glyph->bitmap, static_cast<int>(x >> 6) + face->glyph->bitmap_left,
+                         ascender - face->glyph->bitmap_top);
+    canvas.print();
+    std::println("{} {}, {} px, {} glyphs{}", face->family_name, face->style_name, size, glyphs.size(),
+                 FT_HAS_KERNING(face) ? ", kerned" : "");
+    FT_Done_Face(face);
+    return 0;
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    FT_Library lib{};
+    if (FT_Init_FreeType(&lib)) return 1;
+    int status = argc > 1 ? text(lib, argv[1], argc > 2 ? argv[2] : "Hello", 24) : shapes(lib);
+    FT_Done_FreeType(lib);
+    return status;
+}

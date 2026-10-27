@@ -1,0 +1,4 @@
+[template]
+description  = "Text and shapes on the terminal with import mcpplibs.mwrap.freetype: outlines built, stroked and rasterised; any font's text kerned and rendered"
+default      = true
+post_message = "Run `mcpp run` for the shapes, or `mcpp run -- <font file> \"your text\"` to render text in a font."

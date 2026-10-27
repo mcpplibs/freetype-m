@@ -1,0 +1,23 @@
+# FreeType's own test programs, ported onto import mcpplibs.mwrap.freetype;
+# tools/run_conformance.py builds and runs them. The ports keep upstream's
+# logic and output; their sources are FreeType's (FreeType License).
+[package]
+name        = "freetype-conformance"
+version     = "2.13.3"
+description = "FreeType 2.13.3's tests/issue-1063, src/tools/test_trig.c and src/tools/test_bbox.c on import mcpplibs.mwrap.freetype"
+license     = "FTL"
+
+[targets.issue_1063]
+kind = "bin"
+main = "src/issue_1063.cpp"
+
+[targets.test_trig]
+kind = "bin"
+main = "src/test_trig.cpp"
+
+[targets.test_bbox]
+kind = "bin"
+main = "src/test_bbox.cpp"
+
+[dependencies]
+"mcpplibs.mwrap.freetype" = { path = ".." }
