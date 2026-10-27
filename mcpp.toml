@@ -1,0 +1,58 @@
+# Module wrapper; upstream API preserved. Policy: mcpp-index/docs/mwrap.md.
+[package]
+namespace   = "mcpplibs.mwrap"
+name        = "freetype"
+version     = "2.13.3"
+description = "FreeType 2.13.3 C++ modules for mcpp (import mcpplibs.mwrap.freetype;): the public API of every FreeType header over compat.freetype, its macros as constants and constexpr functions"
+license     = "Apache-2.0"
+authors     = ["mcpp-community"]
+repo        = "https://github.com/mcpplibs/freetype-m"
+platforms   = ["linux", "macos", "windows"]
+
+[targets.freetype]
+kind = "lib"
+
+[build]
+sources      = ["src/*.cppm"]
+# <mwrap/freetype/macros.hpp>: the macros a constant or function cannot be.
+include_dirs = ["include"]
+
+[dependencies]
+compat.freetype = "2.13.3"
+
+[dev-dependencies]
+compat.gtest = "1.15.2"
+
+[package.metadata.mwrap]
+upstream-version = "2.13.3"
+
+# The wrapper's license and notice, and FreeType's: the license selector,
+# the FreeType License that applies (FTL; GPLv2 is not elected), and the
+# notices of the statically linked BDF and PCF drivers.
+[[runtime.deploy]]
+from = "LICENSE"
+to   = "licenses/freetype"
+
+[[runtime.deploy]]
+from = "NOTICE"
+to   = "licenses/freetype"
+
+[[runtime.deploy]]
+from = "upstream/freetype/README"
+to   = "licenses/freetype/upstream/freetype"
+
+[[runtime.deploy]]
+from = "upstream/freetype/LICENSE.TXT"
+to   = "licenses/freetype/upstream/freetype"
+
+[[runtime.deploy]]
+from = "upstream/freetype/docs/FTL.TXT"
+to   = "licenses/freetype/upstream/freetype/docs"
+
+[[runtime.deploy]]
+from = "upstream/freetype/src/bdf/README"
+to   = "licenses/freetype/upstream/freetype/src/bdf"
+
+[[runtime.deploy]]
+from = "upstream/freetype/src/pcf/README"
+to   = "licenses/freetype/upstream/freetype/src/pcf"

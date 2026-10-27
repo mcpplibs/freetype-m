@@ -1,0 +1,33 @@
+{
+  "upstream": "https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-3.tar.gz",
+  "upstream_sha256": "bc5c898e4756d373e0d991bab053036c5eb2aa7c0d5c67e8662ddc6da40c4103",
+  "license": "FreeType is dual-licensed (LICENSE.TXT): the FreeType License (docs/FTL.TXT) or the GPLv2. This package and every program built with it use FreeType under the FreeType License (FTL); the GPLv2 alternative is not elected, so docs/GPLv2.TXT is not retained. The contributed BDF and PCF drivers (src/bdf/README, src/pcf/README) carry their X11-style notices; the gzip module is under the zlib license, which requires no notice in binary distributions (src/gzip/zlib.h).",
+  "pruning": "Nothing of FreeType is vendored: the library is compat.freetype 2.13.3, built from the same tarball. Its README, license selector, the FreeType License and the notices of the statically linked BDF and PCF drivers are retained here.",
+  "documents": [
+    {
+      "path": "upstream/freetype/README",
+      "source": "https://gitlab.freedesktop.org/freetype/freetype/-/blob/VER-2-13-3/README",
+      "sha256": "304b99f680248e42f9c656d36c8c41cda74cf6eebbc5af4d11c4abc1b0d9e2b9"
+    },
+    {
+      "path": "upstream/freetype/LICENSE.TXT",
+      "source": "https://gitlab.freedesktop.org/freetype/freetype/-/blob/VER-2-13-3/LICENSE.TXT",
+      "sha256": "2e3bbb7d7c5c396368dd0853a790ec29ce5b8647163dde42a0493fb0d6556b2b"
+    },
+    {
+      "path": "upstream/freetype/docs/FTL.TXT",
+      "source": "https://gitlab.freedesktop.org/freetype/freetype/-/blob/VER-2-13-3/docs/FTL.TXT",
+      "sha256": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1"
+    },
+    {
+      "path": "upstream/freetype/src/bdf/README",
+      "source": "https://gitlab.freedesktop.org/freetype/freetype/-/blob/VER-2-13-3/src/bdf/README",
+      "sha256": "7984455e7e5a9faba3797c8bf095fbe10cc846316b7320aff8c58402e22b82fe"
+    },
+    {
+      "path": "upstream/freetype/src/pcf/README",
+      "source": "https://gitlab.freedesktop.org/freetype/freetype/-/blob/VER-2-13-3/src/pcf/README",
+      "sha256": "18d9782898d9eac04476e2f744678137b2a889689ed3e923e052fc396a86f86b"
+    }
+  ]
+}

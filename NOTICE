@@ -1,0 +1,30 @@
+freetype-m: C++ module wrapper
+Copyright (c) 2026 mcpp-community contributors
+
+The wrapper contributions are licensed under the Apache License, Version 2.0.
+Upstream code, copied interfaces and dependencies retain their original
+licenses and copyright notices.
+
+FreeType is dual-licensed (upstream/freetype/LICENSE.TXT). This package and
+the programs built with it use FreeType under the FreeType License
+(upstream/freetype/docs/FTL.TXT); the GPLv2 alternative is not elected. The
+FreeType License asks for this credit in the documentation of a product:
+
+  Portions of this software are copyright © 2024 The FreeType Project
+  (www.freetype.org).  All rights reserved.
+
+The BDF and PCF drivers built into the library carry their own X11-style
+notices (upstream/freetype/src/bdf/README, upstream/freetype/src/pcf/README);
+its gzip module is under the zlib license. The library itself is built by
+compat.freetype from the same release. FreeType's original README and these
+documents are retained in upstream/freetype/; provenance and checksums are
+recorded in upstream/documents.json.
+
+conformance/ holds ports of FreeType's own test programs
+(tests/issue-1063/main.c, src/tools/test_trig.c, src/tools/test_bbox.c),
+copyright The FreeType Project, used under the FreeType License.
+
+tests/data/JetBrainsMono.ttf is JetBrains Mono, copyright 2020 The JetBrains
+Mono Project Authors, under the SIL Open Font License 1.1
+(tests/data/OFL-JetBrainsMono.txt). The other test fonts are made by
+tools/make_test_fonts.py and are part of this repository.
