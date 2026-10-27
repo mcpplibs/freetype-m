@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mcpp:
+    name: mcpp (${{ matrix.os }}, ${{ matrix.toolchain }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04,   toolchain: 'gcc@16.1.0' }
+          - { os: ubuntu-24.04,   toolchain: 'llvm@23.1.3' }
+          - { os: macos-15,       toolchain: 'llvm@23.1.3' }
+          - { os: windows-2025,   toolchain: 'llvm@23.1.3' }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      XLINGS_NON_INTERACTIVE: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Mwrap identity and bilingual README contract
+        run: python3 tools/check_mwrap_release.py
+
+      - name: Install Xlings (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/openxlings/xlings/refs/heads/main/tools/other/quick_install.sh | bash
+          echo "$HOME/.xlings/subos/current/bin" >> "$GITHUB_PATH"
+
+      - name: Install Xlings (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          irm https://raw.githubusercontent.com/openxlings/xlings/main/tools/other/quick_install.ps1 | iex
+          "$env:USERPROFILE\.xlings\subos\current\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install project tools (.xlings.json)
+        run: |
+          for attempt in 1 2 3; do
+            xlings update > /dev/null 2>&1 || true
+            if xlings install; then break; fi
+            [ "$attempt" = 3 ] && exit 1
+            sleep 30
+          done
+          mcpp --version
+
+      - name: Select the toolchain
+        run: |
+          name="${{ matrix.toolchain }}"
+          mcpp toolchain install "${name%@*}" "${name#*@}"
+          mcpp toolchain default "$name"
+
+      - name: Build the modules
+        run: mcpp build
+
+      - name: Tests (the API on real and purpose-made fonts, macros, header mixing, the whole surface)
+        run: mcpp test
+
+      - name: Export audit (the generated surface is fresh; every declaration and macro of the public headers)
+        run: python3 tools/check_exports.py
+
+      - name: FreeType's own tests on the module (issue-1063, test_trig, test_bbox; apinames against the exports)
+        run: python3 tools/run_conformance.py
+
+      - name: Example (ftdump on the test fonts)
+        working-directory: examples/ftdump
+        run: mcpp run -- ../../tests/data/JetBrainsMono.ttf ../../tests/data/mwrap-test.ttf ../../tests/data/mwrap-test.otf
+
+      - name: Test fonts reproduce byte for byte (tools/make_test_fonts.py)
+        if: matrix.os == 'ubuntu-24.04' && matrix.toolchain == 'gcc@16.1.0'
+        run: |
+          python3 -m pip install --quiet fonttools==4.67.0
+          python3 tools/make_test_fonts.py
+          # Deflate output may differ between zlib builds: the committed .gz is
+          # checked by what it decompresses to, everything else byte for byte.
+          git diff --exit-code -- tests/data ':!tests/data/mwrap-test.ttf.gz'
+          git checkout -- tests/data/mwrap-test.ttf.gz
+          python3 -c "import gzip; assert gzip.decompress(open('tests/data/mwrap-test.ttf.gz', 'rb').read()) == open('tests/data/mwrap-test.ttf', 'rb').read()"

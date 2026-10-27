@@ -1,0 +1,5 @@
+# Preserve upstream document bytes and original whitespace on every platform.
+upstream/** -text -whitespace
+
+# Test data keeps its bytes on every platform.
+tests/data/** -text -whitespace
