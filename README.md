@@ -29,7 +29,7 @@ on every CI run, ported onto the module.
 ## Getting started
 
 ```sh
-mcpp new banner --template mcpplibs.mwrap.freetype@2.13.3
+mcpp new banner --template mcpplibs.mwrap.freetype@2.13.3.1
 cd banner
 mcpp run                                   # a star and a stroked ring, rasterised
 mcpp run -- /path/to/font.ttf "Hello"      # text in any font, kerned
@@ -42,7 +42,7 @@ kerning instead.
 
 ```toml
 [dependencies]
-"mcpplibs.mwrap.freetype" = "2.13.3"
+mcpplibs.mwrap.freetype = "2.13.3.1"
 ```
 
 ```cpp

@@ -2,7 +2,7 @@
 [package]
 namespace   = "mcpplibs.mwrap"
 name        = "freetype"
-version     = "2.13.3"
+version     = "2.13.3.1"
 description = "FreeType 2.13.3 C++ modules for mcpp (import mcpplibs.mwrap.freetype;): the public API of every FreeType header over compat.freetype, its macros as constants and constexpr functions"
 license     = "Apache-2.0"
 authors     = ["mcpp-community"]

@@ -27,7 +27,7 @@ FreeType 自带的测试程序移植到本模块之后，每次 CI 都全部通�
 ## 快速开始
 
 ```sh
-mcpp new banner --template mcpplibs.mwrap.freetype@2.13.3
+mcpp new banner --template mcpplibs.mwrap.freetype@2.13.3.1
 cd banner
 mcpp run                                   # 光栅化一颗星和一个描边的圆环
 mcpp run -- /path/to/font.ttf "Hello"      # 用任意字体排一行文字，带字距调整
@@ -39,7 +39,7 @@ mcpp run -- /path/to/font.ttf "Hello"      # 用任意字体排一行文字，�
 
 ```toml
 [dependencies]
-"mcpplibs.mwrap.freetype" = "2.13.3"
+mcpplibs.mwrap.freetype = "2.13.3.1"
 ```
 
 ```cpp
