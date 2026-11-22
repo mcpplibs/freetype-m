@@ -9,4 +9,4 @@ kind = "bin"
 main = "src/main.cpp"
 
 [dependencies]
-"mcpplibs.mwrap.freetype" = { path = "../.." }
+mcpplibs.mwrap.freetype = { path = "../.." }

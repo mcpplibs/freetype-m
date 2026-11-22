@@ -20,4 +20,4 @@ kind = "bin"
 main = "src/test_bbox.cpp"
 
 [dependencies]
-"mcpplibs.mwrap.freetype" = { path = ".." }
+mcpplibs.mwrap.freetype = { path = ".." }
